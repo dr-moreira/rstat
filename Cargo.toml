@@ -1,0 +1,8 @@
+[package]
+name = "rstat"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ndarray = "0.16.1"
+rawpointer = "0.2.1"
