@@ -1,17 +1,45 @@
-use crate::{sort::PermuteArray, sort::SortArray, types::Vector1D};
-use ndarray::prelude::*;
+use crate::types::Vector1D;
 
+#[cfg(test)]
+use ndarray::{array, Array1};
+
+/// Calcula a mediana de um vetor usando o algoritmo quickselect (O(n) em média)
+/// ao invés de ordenação completa (O(n log n)).
+///
+/// # Algoritmo
+/// - Para arrays ímpares: usa select_nth_unstable para encontrar o elemento do meio
+/// - Para arrays pares: usa select_nth_unstable duas vezes para encontrar os dois
+///   elementos do meio e retorna sua média
+///
+/// # Complexidade
+/// - Tempo: O(n) em média, O(n²) no pior caso
+/// - Espaço: O(n) para a cópia do vetor
 pub fn median(list: &Vector1D) -> f64 {
-    let list = list.clone();
-    let l = list.len();
-    let perm = list.sort_axis_by(Axis(0), |i, j| list[[i]] > list[[j]]);
-    let b = list.permute_axis(Axis(0), &perm);
+    let mut data = list.to_vec();
+    let len = data.len();
+    let mid = len / 2;
 
-    let mid = l / 2;
-    if l % 2 == 0 {
-        (b[mid - 1] + b[mid]) / 2.0
+    if len % 2 == 0 {
+        // Para tamanho par, precisamos dos dois elementos do meio
+        // Primeiro, particionamos no índice mid
+        let (left, median_high, _) = data.select_nth_unstable_by(mid, |a, b| {
+            a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal)
+        });
+        let median_high_val = *median_high;
+
+        // O elemento inferior do meio é o máximo da metade esquerda
+        let median_low_val = left
+            .iter()
+            .cloned()
+            .fold(f64::NEG_INFINITY, f64::max);
+
+        (median_low_val + median_high_val) / 2.0
     } else {
-        b[mid]
+        // Para tamanho ímpar, pegar o elemento do meio
+        let (_, median_val, _) = data.select_nth_unstable_by(mid, |a, b| {
+            a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal)
+        });
+        *median_val
     }
 }
 
